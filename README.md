@@ -4,17 +4,19 @@
 
 ---
 
-## 📂 Состав проекта
+## 📂 Структура проекта
 
-laravel-vue-spa/
-│
-├── backend/ # Laravel backend (PHP 8.3, Composer)
-├── frontend/ # Vue 3 + Vite frontend (Node.js)
-├── nginx/ # Конфиг Nginx
-├── .env.example # Переменные окружения
-├── .gitignore
-├── docker-compose.override.yml # Конфигурация для develop
-├── docker-compose.yml # Конфигурация сервисов
-├── init.sh # Скрипт инициализации и запуска проекта
-├── Makefile # Make команды
-└── README.md # Этот файл
+```plaintext
+.
+├── backend/                   # Laravel-приложение
+│   ├── .env.example
+│   └── ...
+├── frontend/                  # Vue-приложение
+│   ├── .env.example
+│   └── ...
+├── nginx/                     # Конфиги Nginx
+│   └── nginx.conf
+├── docker-compose.yml
+├── docker-compose.override.yml
+├── Makefile
+└── init.sh
