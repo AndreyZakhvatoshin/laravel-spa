@@ -10,8 +10,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     git \
     curl \
+    libpq-dev \
+    librabbitmq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql
+    && docker-php-ext-install gd pdo pdo_mysql sockets \
+    && pecl install redis amqp \
+    && docker-php-ext-enable redis amqp \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
@@ -24,11 +29,8 @@ RUN groupadd -g ${GID} appuser \
 
 COPY . /var/www/html
 RUN chown -R appuser:appuser /var/www/html
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 USER appuser
-
-RUN composer install --no-interaction --optimize-autoloader
-
-RUN chmod -R 775 storage bootstrap/cache
 
 CMD ["php-fpm"]
