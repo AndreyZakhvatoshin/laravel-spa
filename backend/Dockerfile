@@ -12,10 +12,12 @@ RUN apt-get update && apt-get install -y \
     curl \
     libpq-dev \
     librabbitmq-dev \
+    libicu-dev \
+    icu-devtools \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql sockets \
+    && docker-php-ext-install gd pdo pdo_mysql sockets intl pcntl \
     && pecl install redis amqp \
-    && docker-php-ext-enable redis amqp \
+    && docker-php-ext-enable redis amqp pcntl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN curl -sS https://getcomposer.org/installer | php -- \

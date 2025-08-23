@@ -25,7 +25,6 @@ if [ ! -f backend/.env ]; then
   echo "📄 Копируем backend/.env.example → backend/.env"
   cp backend/.env.example backend/.env
   echo "⚠️ Отредактируйте backend/.env (DB_HOST=mysql, REDIS_HOST=redis, RABBITMQ_HOST=rabbitmq и т.д.)!"
-  # Добавляем настройки для Redis и RabbitMQ
   echo "REDIS_HOST=redis" >> backend/.env
   echo "REDIS_PORT=6379" >> backend/.env
   echo "REDIS_PASSWORD=null" >> backend/.env
@@ -37,7 +36,14 @@ if [ ! -f backend/.env ]; then
   echo "RABBITMQ_USER=guest" >> backend/.env
   echo "RABBITMQ_PASSWORD=guest" >> backend/.env
   echo "RABBITMQ_VHOST=/" >> backend/.env
-  echo "RABBITMQ_QUEUE=laravel_queue" >> backend/.env
+  echo "RABBITMQ_QUEUE=chat_messages" >> backend/.env
+  echo "BROADCAST_DRIVER=reverb" >> backend/.env
+  echo "REVERB_APP_ID=chatapp" >> backend/.env
+  echo "REVERB_APP_KEY=chatappkey" >> backend/.env
+  echo "REVERB_APP_SECRET=chatappsecret" >> backend/.env
+  echo "REVERB_HOST=websockets" >> backend/.env
+  echo "REVERB_PORT=6001" >> backend/.env
+  echo "REVERB_SCHEME=http" >> backend/.env
 else
   echo "✅ backend/.env уже существует"
 fi
@@ -46,19 +52,22 @@ if [ ! -f frontend/.env ]; then
   echo "📄 Копируем frontend/.env.example → frontend/.env"
   cp frontend/.env.example frontend/.env
   echo "⚠️ Отредактируйте frontend/.env (VITE_API_BASE_URL=http://nginx/api и т.д.)!"
+  echo "VITE_API_BASE_URL=http://nginx/api" >> frontend/.env
+  echo "VITE_REVERB_HOST=localhost" >> frontend/.env
+  echo "VITE_REVERB_PORT=6001" >> frontend/.env
+  echo "VITE_REVERB_KEY=chatappkey" >> frontend/.env
+  echo "VITE_REVERB_SCHEME=http" >> frontend/.env
 else
   echo "✅ frontend/.env уже существует"
 fi
 echo "✅ .env файлы готовы"
 
-# === 2. Запуск docker-compose ===
+# === 3. Запуск docker-compose ===
 echo "⏳ Запуск контейнеров..."
 if [ "$MODE" = "prod" ]; then
-  # Для prod: build Vue сначала, без override
   cd frontend && npm run build && cd ..
   docker-compose -f docker-compose.yml up -d --build --remove-orphans
 else
-  # Dev: с override
   docker-compose up -d --build --remove-orphans
 fi
 
@@ -107,48 +116,53 @@ if [ $i -eq 12 ]; then
   exit 1
 fi
 
-# === 3. Установка зависимостей Laravel ===
+# === 4. Установка зависимостей Laravel ===
 echo "⏳ Установка зависимостей Laravel..."
-# Очистка vendor перед установкой
 docker-compose exec -T laravel rm -rf /var/www/html/vendor
-docker-compose exec -T laravel composer require predis/predis vladimir-yuldashev/laravel-queue-rabbitmq:^14.2.0 --no-interaction --with-all-dependencies
+docker-compose exec -T laravel composer require predis/predis vladimir-yuldashev/laravel-queue-rabbitmq:^14.2 laravel/reverb:^1.0 --no-interaction --with-all-dependencies
 docker-compose exec -T laravel composer install --no-interaction --optimize-autoloader
+docker-compose exec -T laravel composer dump-autoload
 echo "✅ Зависимости Laravel установлены"
 
-# === 4. Проверка и установка прав ===
-echo "⏳ Установка прав на vendor, storage и cache..."
+# === 5. Публикация конфигурации Reverb ===
+echo "⏳ Публикация конфигурации Laravel Reverb..."
+docker-compose exec -T laravel php artisan reverb:install
+echo "✅ Конфигурация Reverb опубликована"
+
+# === 6. Проверка и установка прав ===
+echo "⏳ Установка прав на vendor, storage, cache и Jobs..."
 docker-compose exec -T laravel chown -R appuser:appuser /var/www/html
-docker-compose exec -T laravel chmod -R 775 /var/www/html/vendor /var/www/html/storage /var/www/html/bootstrap/cache
+docker-compose exec -T laravel chmod -R 775 /var/www/html/vendor /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/app/Jobs
 echo "✅ Права установлены"
 
-# === 5. Генерация APP_KEY ===
+# === 7. Генерация APP_KEY ===
 echo "⏳ Генерация APP_KEY..."
 docker-compose exec -T laravel php artisan key:generate --force
 echo "✅ APP_KEY сгенерирован"
 
-# === 6. Установка зависимостей Vue ===
+# === 8. Установка зависимостей Vue ===
 echo "⏳ Установка зависимостей Vue..."
 docker-compose exec -T vue npm install
 echo "✅ Зависимости Vue установлены"
 
-# === 7. Миграции ===
+# === 9. Миграции ===
 echo "⏳ Сброс и выполнение миграций..."
 docker-compose exec -T laravel php artisan migrate:fresh --seed --force
 echo "✅ Миграции и сиды выполнены"
 
-# === 8. Очистка кэшей Laravel ===
+# === 10. Очистка кэшей Laravel ===
 echo "⏳ Очистка кэшей Laravel..."
 docker-compose exec -T laravel php artisan optimize:clear
 echo "✅ Кэш Laravel очищен"
 
-# === 9. Запуск очереди RabbitMQ (только в dev) ===
+# === 11. Запуск очереди RabbitMQ ===
 if [ "$MODE" = "dev" ]; then
   echo "⏳ Запуск очереди RabbitMQ..."
-  docker-compose exec -T laravel php artisan queue:work --queue=laravel_queue --tries=3 &
+  docker-compose exec -T laravel php artisan queue:work --queue=chat_messages --tries=3 &
   echo "✅ Очередь RabbitMQ запущена в фоне"
 fi
 
-# === 10. Завершение ===
+# === 12. Завершение ===
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ Проект успешно запущен!"
 if [ "$MODE" = "prod" ]; then
@@ -161,7 +175,7 @@ echo "phpMyAdmin: http://localhost:8080 (user: root, pass: root)"
 echo "Redis CLI: docker-compose exec redis redis-cli"
 echo "RabbitMQ Management UI: http://localhost:15672 (user: guest, pass: guest)"
 echo "Логи: docker-compose logs -f"
-echo "Для остановки: make down"
+echo "Для остановки: docker-compose down"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Trap для cleanup при ошибке
