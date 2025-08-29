@@ -1,23 +1,16 @@
 <template>
-  <Header />
-  <main class="p-4">
-    <router-view />
-  </main>
-  <Footer />
+  <router-view />
 </template>
 
 <script setup>
-import Header from './components/Header.vue'
-import Footer from './components/Footer.vue'
-</script>
+import { onMounted } from 'vue';
+import { useAuthStore } from './store/auth';
+import { useRouter } from 'vue-router';
 
-<style>
-body {
-  font-family: sans-serif;
-  margin: 0;
-  padding: 0;
-}
-main {
-  min-height: 70vh;
-}
-</style>
+onMounted(() => {
+  const authStore = useAuthStore();
+  if (authStore.token) {
+    authStore.fetchUser();
+  }
+});
+</script>

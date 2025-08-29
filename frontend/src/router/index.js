@@ -1,17 +1,32 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import About from '../views/About.vue'
-import Home from '../views/Home.vue';
-import Register from '../views/Register.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import Register from '../views/Register.vue';
+import Login from '../views/Login.vue';
+import Profile from '../views/Profile.vue';
+import { useAuthStore } from '../store/auth';
 
 const routes = [
-  { path: '/', component: Home },
-  { path: '/about', component: About },
-  { path: '/register', name: 'Register', component: Register },
-]
+  { path: '/register', component: Register },
+  { path: '/login', component: Login },
+  {
+    path: '/profile',
+    component: Profile,
+    meta: { requiresAuth: true },
+  },
+  { path: '/', redirect: '/login' },
+];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
-})
+  routes,
+});
 
-export default router
+router.beforeEach((to, from, next) => {
+  const authStore = useAuthStore();
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next('/login');
+  } else {
+    next();
+  }
+});
+
+export default router;

@@ -1,12 +1,8 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h2 class="title">Register</h2>
-      <form @submit.prevent="handleRegister" class="form">
-        <div class="form-group">
-          <label for="name" class="label">Name</label>
-          <input v-model="form.name" type="text" id="name" class="input" required>
-        </div>
+      <h2 class="title">Login</h2>
+      <form @submit.prevent="handleLogin" class="form">
         <div class="form-group">
           <label for="email" class="label">Email</label>
           <input v-model="form.email" type="email" id="email" class="input" required>
@@ -15,15 +11,11 @@
           <label for="password" class="label">Password</label>
           <input v-model="form.password" type="password" id="password" class="input" required>
         </div>
-        <div class="form-group">
-          <label for="password_confirmation" class="label">Confirm Password</label>
-          <input v-model="form.password_confirmation" type="password" id="password_confirmation" class="input" required>
-        </div>
-        <button type="submit" class="button">Register</button>
+        <button type="submit" class="button">Login</button>
         <p v-if="error" class="error">{{ error }}</p>
       </form>
       <p class="link">
-        Already have an account? <router-link to="/login">Login</router-link>
+        Don't have an account? <router-link to="/register">Регистрация</router-link>
       </p>
     </div>
   </div>
@@ -35,29 +27,22 @@ import { useAuthStore } from '../store/auth';
 import { useRouter } from 'vue-router';
 
 const form = ref({
-  name: '',
   email: '',
   password: '',
-  password_confirmation: '',
 });
 const error = ref(null);
 const authStore = useAuthStore();
 const router = useRouter();
 
-const handleRegister = async () => {
-  console.log('Register attempt:', form.value); // Отладка
+const handleLogin = async () => {
   try {
-    await authStore.register({
-      name: form.value.name,
+    await authStore.login({
       email: form.value.email,
       password: form.value.password,
-      password_confirmation: form.value.password_confirmation,
     });
-    console.log('Registration successful'); // Отладка
     router.push('/profile');
   } catch (err) {
-    console.error('Registration error:', err); // Отладка
-    error.value = err.response?.data?.message || 'Registration failed';
+    error.value = err.response?.data?.message || 'Login failed';
   }
 };
 </script>
