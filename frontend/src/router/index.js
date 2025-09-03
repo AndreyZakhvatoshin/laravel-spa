@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Register from '../views/Register.vue';
 import Login from '../views/Login.vue';
 import Profile from '../views/Profile.vue';
+import Home from "../views/Home.vue";
 import { useAuthStore } from '../store/auth';
 
 const routes = [
@@ -12,7 +13,7 @@ const routes = [
     component: Profile,
     meta: { requiresAuth: true },
   },
-  { path: '/', redirect: '/login' },
+  { path: '/', component: Home },
 ];
 
 const router = createRouter({

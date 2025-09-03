@@ -1,40 +1,76 @@
-import { defineStore } from 'pinia';
-import { register, login, logout, getUser } from '../api/auth'; // Import all API functions
+import { defineStore } from 'pinia'
+import axios from 'axios'
 
 export const useAuthStore = defineStore('auth', {
     state: () => ({
-        user: null,
-        token: localStorage.getItem('token'),
+        isAuthenticated: false,
+        user: {
+            name: '',
+            avatar: 'https://via.placeholder.com/32'
+        },
+        token: null
     }),
     actions: {
-        async register(credentials) {
-            const response = await register(credentials); // Use the imported register function
-            this.token = response.access_token;
-            localStorage.setItem('token', this.token);
-            // Assuming api is the axios instance from api/auth.js
-            // If not, adjust the headers manually or import api
-            // import api from '../api/auth'; api.defaults.headers.Authorization = `Bearer ${this.token}`;
-            this.user = response.user;
+        async register(userData) {
+            try {
+                // Отправляем запрос на регистрацию
+                const response = await axios.post('/api/register', userData);
+
+                // Сохраняем токен
+                this.token = response.data.token;
+                localStorage.setItem('token', response.data.token);
+
+                // Устанавливаем данные пользователя
+                this.setUserData({
+                    name: userData.name,
+                    // Здесь можно добавить другие данные из ответа
+                });
+
+                // Помечаем как аутентифицированного
+                this.isAuthenticated = true;
+
+                return response;
+            } catch (error) {
+                // Пробрасываем ошибку дальше для обработки в компоненте
+                throw error;
+            }
         },
-        async login(credentials) {
-            const response = await login(credentials);
-            this.token = response.access_token;
-            localStorage.setItem('token', this.token);
-            // api.defaults.headers.Authorization = `Bearer ${this.token}`; // Uncomment if needed
-            this.user = response.user;
+
+        async login(userData) {
+            try {
+                const response = await axios.post('/api/login', userData);
+
+                this.token = response.data.token;
+                localStorage.setItem('token', response.data.token);
+
+                this.setUserData({
+                    name: userData.email,
+                });
+
+                this.isAuthenticated = true;
+
+                return response;
+            } catch (error) {
+                throw error;
+            }
         },
-        async logout() {
-            await logout();
-            this.token = null;
-            this.user = null;
+
+        logout() {
             localStorage.removeItem('token');
-            // delete api.defaults.headers.Authorization; // Uncomment if needed
+            this.token = null;
+            this.isAuthenticated = false;
+            this.user = {
+                name: '',
+                avatar: 'https://via.placeholder.com/32'
+            };
         },
-        async fetchUser() {
-            this.user = await getUser();
-        },
+
+        setUserData(userData) {
+            this.user = { ...this.user, ...userData };
+        }
     },
     getters: {
-        isAuthenticated: (state) => !!state.token,
-    },
+        userName: (state) => state.user.name,
+        userAvatar: (state) => state.user.avatar
+    }
 });

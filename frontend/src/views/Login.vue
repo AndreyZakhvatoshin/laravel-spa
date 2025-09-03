@@ -1,21 +1,21 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <h2 class="title">Login</h2>
+      <h2 class="title">Вход</h2>
       <form @submit.prevent="handleLogin" class="form">
         <div class="form-group">
-          <label for="email" class="label">Email</label>
+          <label for="email" class="label">Почта</label>
           <input v-model="form.email" type="email" id="email" class="input" required>
         </div>
         <div class="form-group">
-          <label for="password" class="label">Password</label>
+          <label for="password" class="label">Пароль</label>
           <input v-model="form.password" type="password" id="password" class="input" required>
         </div>
-        <button type="submit" class="button">Login</button>
+        <button type="submit" class="button">Войти</button>
         <p v-if="error" class="error">{{ error }}</p>
       </form>
       <p class="link">
-        Don't have an account? <router-link to="/register">Регистрация</router-link>
+        Нет аккаунта? <router-link to="/register">Регистрация</router-link>
       </p>
     </div>
   </div>
@@ -49,8 +49,7 @@ const handleLogin = async () => {
 
 <style scoped>
 .login-container {
-  min-height: 100vh;
-  background-color: #f5f5f5;
+  min-height: 80vh;
   display: flex;
   justify-content: center;
   align-items: center;

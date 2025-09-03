@@ -1,28 +1,19 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
-    withCredentials: true, // Для Sanctum CSRF
+    baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+    headers: {
+        'Content-Type': 'application/json'
+    }
 });
 
-export const register = async (credentials) => {
-    const response = await api.post('api/register', credentials);
-    return response.data;
-};
-
-export const login = async (credentials) => {
-    const response = await api.post('/login', credentials);
-    return response.data;
-};
-
-export const logout = async () => {
-    const response = await api.post('/logout');
-    return response.data;
-};
-
-export const getUser = async () => {
-    const response = await api.get('/me');
-    return response.data;
-};
+// Добавляем токен к каждому запросу, если он существует
+api.interceptors.request.use(config => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 export default api;
