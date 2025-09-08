@@ -1,10 +1,13 @@
 services:
   laravel:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        COMPOSER_FLAGS: ""  # ← Пустая строка = устанавливаем ВСЕ зависимости (включая dev)
     volumes:
       - ./backend:/var/www/html
-    environment:
-      - APP_ENV=local
-      - APP_DEBUG=true
+      - ./.env:/var/www/html/.env
 
   websockets:
     volumes:
@@ -47,7 +50,7 @@ services:
     container_name: phpmyadmin
     environment:
       - PMA_HOST=mysql
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=secret
     ports:
       - "8080:80"
     depends_on:

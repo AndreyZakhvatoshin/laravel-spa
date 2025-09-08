@@ -24,12 +24,24 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
+ARG COMPOSER_FLAGS="--no-dev --no-plugins --no-scripts"
 ARG UID=1000
 ARG GID=1000
 RUN groupadd -g ${GID} appuser \
     && useradd -u ${UID} -g appuser -m -s /bin/bash appuser
 
-COPY . /var/www/html
+# Копируем composer.json и lock отдельно — для кэширования
+COPY composer.json composer.lock ./
+
+RUN composer install ${COMPOSER_FLAGS} --no-autoloader --optimize-autoloader
+
+# Копируем остальной код
+COPY . .
+
+# Генерируем автозагрузчик БЕЗ выполнения скриптов
+RUN composer dump-autoload --optimize --no-scripts --no-plugins
+
+# Меняем владельца
 RUN chown -R appuser:appuser /var/www/html
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 

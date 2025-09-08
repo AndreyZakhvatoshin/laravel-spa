@@ -21,31 +21,31 @@ fi
 
 # === 1. Создание .env ===
 echo "⏳ Создание .env..."
-if [ ! -f backend/.env ]; then
-  echo "📄 Копируем backend/.env.example → backend/.env"
-  cp backend/.env.example backend/.env
-  echo "⚠️ Отредактируйте backend/.env (DB_HOST=mysql, REDIS_HOST=redis, RABBITMQ_HOST=rabbitmq и т.д.)!"
-  echo "REDIS_HOST=redis" >> backend/.env
-  echo "REDIS_PORT=6379" >> backend/.env
-  echo "REDIS_PASSWORD=null" >> backend/.env
-  echo "CACHE_DRIVER=redis" >> backend/.env
-  echo "SESSION_DRIVER=redis" >> backend/.env
-  echo "QUEUE_CONNECTION=rabbitmq" >> backend/.env
-  echo "RABBITMQ_HOST=rabbitmq" >> backend/.env
-  echo "RABBITMQ_PORT=5672" >> backend/.env
-  echo "RABBITMQ_USER=guest" >> backend/.env
-  echo "RABBITMQ_PASSWORD=guest" >> backend/.env
-  echo "RABBITMQ_VHOST=/" >> backend/.env
-  echo "RABBITMQ_QUEUE=chat_messages" >> backend/.env
-  echo "BROADCAST_DRIVER=reverb" >> backend/.env
-  echo "REVERB_APP_ID=chatapp" >> backend/.env
-  echo "REVERB_APP_KEY=chatappkey" >> backend/.env
-  echo "REVERB_APP_SECRET=chatappsecret" >> backend/.env
-  echo "REVERB_HOST=websockets" >> backend/.env
-  echo "REVERB_PORT=6001" >> backend/.env
-  echo "REVERB_SCHEME=http" >> backend/.env
+if [ ! -f .env ]; then
+  echo "📄 Копируем backend/.env.example → .env"
+  cp backend/.env.example .env
+  echo "⚠️ Отредактируйте .env (DB_HOST=mysql, REDIS_HOST=redis, RABBITMQ_HOST=rabbitmq и т.д.)!"
+  echo "REDIS_HOST=redis" >> .env
+  echo "REDIS_PORT=6379" >> .env
+  echo "REDIS_PASSWORD=null" >> .env
+  echo "CACHE_DRIVER=redis" >> .env
+  echo "SESSION_DRIVER=redis" >> .env
+  echo "QUEUE_CONNECTION=rabbitmq" >> .env
+  echo "RABBITMQ_HOST=rabbitmq" >> .env
+  echo "RABBITMQ_PORT=5672" >> .env
+  echo "RABBITMQ_USER=guest" >> .env
+  echo "RABBITMQ_PASSWORD=guest" >> .env
+  echo "RABBITMQ_VHOST=/" >> .env
+  echo "RABBITMQ_QUEUE=chat_messages" >> .env
+  echo "BROADCAST_DRIVER=reverb" >> .env
+  echo "REVERB_APP_ID=chatapp" >> .env
+  echo "REVERB_APP_KEY=chatappkey" >> .env
+  echo "REVERB_APP_SECRET=chatappsecret" >> .env
+  echo "REVERB_HOST=websockets" >> .env
+  echo "REVERB_PORT=6001" >> .env
+  echo "REVERB_SCHEME=http" >> .env
 else
-  echo "✅ backend/.env уже существует"
+  echo "✅ .env уже существует"
 fi
 
 if [ ! -f frontend/.env ]; then
@@ -149,7 +149,7 @@ echo "✅ Зависимости Vue установлены"
 # === 9. Миграции ===
 if [ "$MODE" = "dev" ]; then
   echo "⏳ Выполнение свежих миграций с сидами..."
-  docker-compose run --rm laravel php artisan migrate:fresh --seed --force
+  docker-compose exec -T laravel php artisan migrate:fresh --seed --force
 else
   # Для prod: только миграции (без удаления данных!)
   echo "⏳ Применение миграций..."
