@@ -63,7 +63,7 @@ fi
 echo "✅ .env файлы готовы"
 
 # === 3. Запуск docker-compose ===
-echo "⏳ Запуск контейнеров..."
+echo "🐳 Запуск контейнеров..."
 if [ "$MODE" = "prod" ]; then
   cd frontend && npm run build && cd ..
   docker-compose -f docker-compose.yml up -d --build --remove-orphans
@@ -118,16 +118,17 @@ fi
 
 # === 4. Установка зависимостей Laravel ===
 echo "⏳ Установка зависимостей Laravel..."
-docker-compose exec -T laravel rm -rf /var/www/html/vendor
-docker-compose exec -T laravel composer require predis/predis vladimir-yuldashev/laravel-queue-rabbitmq:^14.2 laravel/reverb:^1.0 --no-interaction --with-all-dependencies
 docker-compose exec -T laravel composer install --no-interaction --optimize-autoloader
 docker-compose exec -T laravel composer dump-autoload
 echo "✅ Зависимости Laravel установлены"
 
 # === 5. Публикация конфигурации Reverb ===
 echo "⏳ Публикация конфигурации Laravel Reverb..."
-docker-compose exec -T laravel php artisan reverb:install
-echo "✅ Конфигурация Reverb опубликована"
+if [ ! -f backend/config/reverb.php ]; then
+  docker-compose exec -T laravel php artisan reverb:install --no-interaction
+  echo "✅ Конфигурация Reverb опубликована"
+fi
+echo "✅ Конфигурация Reverb уже существует"
 
 # === 6. Проверка и установка прав ===
 echo "⏳ Установка прав на vendor, storage, cache и Jobs..."
@@ -146,9 +147,14 @@ docker-compose exec -T vue npm install
 echo "✅ Зависимости Vue установлены"
 
 # === 9. Миграции ===
-echo "⏳ Сброс и выполнение миграций..."
-docker-compose exec -T laravel php artisan migrate:fresh --seed --force
-echo "✅ Миграции и сиды выполнены"
+if [ "$MODE" = "dev" ]; then
+  echo "⏳ Выполнение свежих миграций с сидами..."
+  docker-compose run --rm laravel php artisan migrate:fresh --seed --force
+else
+  # Для prod: только миграции (без удаления данных!)
+  echo "⏳ Применение миграций..."
+  docker-compose run --rm migrate
+fi
 
 # === 10. Очистка кэшей Laravel ===
 echo "⏳ Очистка кэшей Laravel..."
@@ -175,7 +181,7 @@ echo "phpMyAdmin: http://localhost:8080 (user: root, pass: root)"
 echo "Redis CLI: docker-compose exec redis redis-cli"
 echo "RabbitMQ Management UI: http://localhost:15672 (user: guest, pass: guest)"
 echo "Логи: docker-compose logs -f"
-echo "Для остановки: docker-compose down"
+echo "Для остановки: make down"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Trap для cleanup при ошибке
