@@ -21,7 +21,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - QUEUE_CONNECTION=rabbitmq
+      - QUEUE_CONNECTION=redis
       - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=${RABBITMQ_USER}
@@ -37,6 +37,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./backend/storage/logs:/var/www/html/storage/logs
     networks:
       - app_network
 
@@ -98,6 +100,8 @@ services:
       - QUEUE_CONNECTION=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
+    volumes:
+      - ./backend/storage/logs:/var/www/html/storage/logs
     networks:
       - app_network
 
@@ -122,6 +126,8 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - QUEUE_CONNECTION=redis
+    volumes:
+      - ./backend/storage/logs:/var/www/html/storage/logs
     networks:
       - app_network
 
@@ -154,6 +160,8 @@ services:
       - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
       - RABBITMQ_VHOST=/
       - RABBITMQ_QUEUE=statistics
+    volumes:
+      - ./backend/storage/logs:/var/www/html/storage/logs
     networks:
       - app_network
 
