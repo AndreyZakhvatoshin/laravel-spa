@@ -24,7 +24,6 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin \
     --filename=composer
 
-ARG COMPOSER_FLAGS="--no-dev --no-plugins --no-scripts"
 ARG UID=1000
 ARG GID=1000
 RUN groupadd -g ${GID} appuser \
@@ -33,7 +32,7 @@ RUN groupadd -g ${GID} appuser \
 # Копируем composer.json и lock отдельно — для кэширования
 COPY composer.json composer.lock ./
 
-RUN composer install ${COMPOSER_FLAGS} --no-autoloader --optimize-autoloader
+RUN composer install --no-autoloader --optimize-autoloader
 
 # Копируем остальной код
 COPY . .
